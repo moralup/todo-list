@@ -16,7 +16,6 @@ class NewTaskForm extends React.Component {
     addTask(value);
     this.setState({ value: '' });
     // eslint-disable-next-line no-console
-    console.log(1, String(1));
   };
 
   saveNewTask = (e) => {

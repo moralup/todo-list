@@ -1,3 +1,5 @@
+/* eslint-disable consistent-return */
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import TaskList from '../task-list/task-list';
 import Footer from '../footer/footer';
@@ -19,10 +21,28 @@ export default class App extends Component {
     this.setState((state) => ({
       todoData: [
         ...state.todoData,
-        { label: task, id: state.count, done: false },
+        {
+          label: task,
+          id: state.count,
+          done: false,
+          time: '00:00:00',
+        },
       ],
       count: +state.count + 1,
     }));
+  };
+
+  updateTime = (time, id) => {
+    this.setState(({ todoData }) => {
+      const idx = todoData.findIndex((el) => +el.id === +id);
+      if (!todoData[idx]) return;
+      const newTaskList = [
+        ...todoData.slice(0, idx),
+        { ...todoData[idx], time },
+        ...todoData.slice(idx + 1),
+      ];
+      return { todoData: newTaskList };
+    });
   };
 
   removeTask = (id) => {
@@ -63,6 +83,7 @@ export default class App extends Component {
   onClearComponent = () => {
     this.setState(({ todoData }) => {
       const activeTaskList = todoData.filter((task) => !task.done);
+      // console.log(activeTaskList);
       return { todoData: activeTaskList };
     });
   };
@@ -75,6 +96,7 @@ export default class App extends Component {
         <TaskList
           onToggleCompleted={this.onToggleCompleted}
           removeTask={this.removeTask}
+          updateTime={this.updateTime}
           tasks={todoData}
           completed={completed}
           active={active}

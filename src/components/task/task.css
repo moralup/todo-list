@@ -1,8 +1,33 @@
-.todo-list li.completed label .description {
+.todo-list li.completed .description {
 	color: #cdcdcd;
 	text-decoration: line-through;
 }
 
 .todo-list li.editing .view {
 	display: none;
+}
+.view{
+	display: flex;
+	justify-content: space-between;
+	width: 423px;
+}
+.timer{
+	display: flex;
+	margin-bottom: auto;
+	margin-left: auto;
+	margin-right: 10px;
+}
+
+.timer-icon{
+	width: 20px;
+	height: 20px;
+	margin: auto;
+
+}
+
+.timer-time{
+	display: flex;
+	margin: auto;
+	font-size: 13px;
+    color: gray;
 }
