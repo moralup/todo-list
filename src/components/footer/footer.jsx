@@ -1,40 +1,29 @@
-/* eslint-disable react/require-default-props */
-import React from 'react';
 import PropTypes from 'prop-types';
-import TaskFilter from '../task-filter/task-filter';
+import TaskFilter from '../task-filter';
 import './footer.css';
 
-function Footer(props) {
-  const {
-    onFilterActive, onFilterCompleted, onFilterAll, active, completed, onClearComponent, num,
-  } = props;
+function Footer({ removeCompletedTask, numOfActiveTasks }) {
   return (
     <footer className="footer">
       <span className="todo-count">
-        {num}
-        {' '}
-        items left
+        {`${numOfActiveTasks} tasks left`}
       </span>
-      <TaskFilter
-        onFilterActive={onFilterActive}
-        onFilterCompleted={onFilterCompleted}
-        onFilterAll={onFilterAll}
-        active={active}
-        completed={completed}
-      />
-      <button type="submit" onClick={onClearComponent} className="clear-completed">Clear completed</button>
+      <TaskFilter />
+      <button 
+        onClick={removeCompletedTask}
+        className="clear-completed">
+          clear completed
+      </button>
     </footer>
   );
 }
 
 Footer.propTypes = {
-  onFilterActive: PropTypes.func,
-  onFilterCompleted: PropTypes.func,
-  onFilterAll: PropTypes.func,
-  onClearComponent: PropTypes.func,
-  active: PropTypes.bool,
-  completed: PropTypes.bool,
-  num: PropTypes.number,
+  removeCompletedTask: PropTypes.func,
+  numOfActiveTasks: PropTypes.number,
 };
-
+Footer.defaultProps = {
+  removeCompletedTask: () => {},
+  numOfActiveTasks: '?',
+};
 export default Footer;

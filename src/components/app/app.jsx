@@ -1,116 +1,79 @@
-/* eslint-disable consistent-return */
-/* eslint-disable react/destructuring-assignment */
-import React, { Component } from 'react';
+import { useState } from 'react';
+import { Provider } from '../context';
 import TaskList from '../task-list/task-list';
 import Footer from '../footer/footer';
 import Header from '../header/header';
 import './app.css';
 
-export default class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      todoData: [],
-      count: 0,
-      active: false,
-      completed: false,
-    };
-  }
-
-  addTask = (task) => {
-    this.setState((state) => ({
-      todoData: [
-        ...state.todoData,
-        {
-          label: task,
-          id: state.count,
-          done: false,
-          time: '00:00:00',
-        },
-      ],
-      count: +state.count + 1,
-    }));
+export default () => {  
+  const [ tasks, setTasks ] = useState([]);
+  const [ id, setId ] = useState(0);
+  const [ filter, setFilter ] = useState('all');
+  
+  const addTask = (name) => {
+    setTasks(ts => [...ts, {
+      name, 
+      id,
+      done: false,
+      time: '00:00:00',
+      date: Date.now(),
+    }]);
+    setId(i => ++i);
   };
 
-  updateTime = (time, id) => {
-    this.setState(({ todoData }) => {
-      const idx = todoData.findIndex((el) => +el.id === +id);
-      if (!todoData[idx]) return;
-      const newTaskList = [
-        ...todoData.slice(0, idx),
-        { ...todoData[idx], time },
-        ...todoData.slice(idx + 1),
-      ];
-      return { todoData: newTaskList };
-    });
+  const updateTasks = (tasks, id, target, time) => {
+    const idx = tasks.findIndex(ts => ts.id === id);
+    let updatableTask = [];  
+    
+    switch(true){
+    case !tasks[idx]:
+      return tasks;
+    case target==='time':
+      updatableTask = [{ ...tasks[idx], time }]; 
+      break;
+    case target==='done':
+      updatableTask = [{ ...tasks[idx], done: !tasks[idx].done }];     
+      break;
+    }     
+    
+    return [...tasks.slice(0, idx), ...updatableTask, ...tasks.slice(idx+1)];
   };
 
-  removeTask = (id) => {
-    this.setState(({ todoData }) => {
-      const idx = todoData.findIndex((el) => +el.id === +id);
-      const newTaskList = [
-        ...todoData.slice(0, idx),
-        ...todoData.slice(idx + 1),
-      ];
-      return { todoData: newTaskList };
-    });
+  const toggleDone = (id) => {
+    setTasks(tasks => updateTasks(tasks, id, 'done'));
+  };
+  
+  const updateTime = (time, id) => {
+    setTasks(task => updateTasks(task, id, 'time', time));
+  };
+  
+  const removeTask = (id) => {
+    setTasks(tasks => updateTasks(tasks, id));
   };
 
-  onToggleCompleted = (id) => {
-    this.setState(({ todoData }) => {
-      const idx = todoData.findIndex((el) => +el.id === +id);
-      const newTaskList = [
-        ...todoData.slice(0, idx),
-        { ...todoData[idx], done: !todoData[idx].done },
-        ...todoData.slice(idx + 1),
-      ];
-      return { todoData: newTaskList };
-    });
+  const removeCompletedTask = () => {
+    setTasks(tasks => tasks.filter(task => !task.done));
   };
 
-  onFilterCompleted = () => {
-    this.setState({ completed: true, active: false });
-  };
-
-  onFilterActive = () => {
-    this.setState({ active: true, completed: false });
-  };
-
-  onFilterAll = () => {
-    this.setState({ active: false, completed: false });
-  };
-
-  onClearComponent = () => {
-    this.setState(({ todoData }) => {
-      const activeTaskList = todoData.filter((task) => !task.done);
-      // console.log(activeTaskList);
-      return { todoData: activeTaskList };
-    });
-  };
-
-  render() {
-    const { todoData, completed, active } = this.state;
-    return (
-      <div>
-        <Header addTask={this.addTask} />
+  return (
+    <>
+      <Provider value={addTask}>
+        <Header/>
+      </Provider>
+      <Provider value={{ toggleDone, removeTask, updateTime }}>
         <TaskList
-          onToggleCompleted={this.onToggleCompleted}
-          removeTask={this.removeTask}
-          updateTime={this.updateTime}
-          tasks={todoData}
-          completed={completed}
-          active={active}
+          tasks={tasks}
+          filter={filter}
         />
+      </Provider>
+      <Provider value={{ filter, setFilter }}>
         <Footer
-          num={todoData.filter((task) => !task.done).length}
-          onFilterActive={this.onFilterActive}
-          onFilterCompleted={this.onFilterCompleted}
-          onFilterAll={this.onFilterAll}
-          onClearComponent={this.onClearComponent}
-          active={active}
-          completed={completed}
+          numOfActiveTasks={tasks.filter((task) => !task.done).length}
+          filter={filter}
+          setFilter={setFilter}
+          removeCompletedTask={removeCompletedTask}
         />
-      </div>
-    );
-  }
-}
+      </Provider>
+    </>
+  );
+};

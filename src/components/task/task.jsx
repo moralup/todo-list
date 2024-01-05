@@ -1,121 +1,100 @@
-/* eslint-disable prefer-template */
-/* eslint-disable react/prop-types */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/no-unused-class-component-methods */
-/* eslint-disable no-shadow */
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import pause from '../../images/icon-music/pause.svg';
-import start from '../../images/icon-music/start.svg';
+import PropTypes from 'prop-types';
+import { Context } from '../context';
+import pause from '../../images/pause.svg';
+import start from '../../images/start.svg';
 import './task.css';
-/* eslint no-use-before-define: 0 */
-export default class Task extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      date: Date.now(),
-      timer: false,
-      time: '00:00:00',
-      indexTimer: null,
-    };
-  }
 
-  componentDidMount() {
-    const { time } = this.props;
-    if (time === this.state.time) return;
-    this.setState({ time });
-  }
-
-  componentWillUnmount() {
-    const { indexTimer, time } = this.state;
-    if (indexTimer) clearInterval(indexTimer);
-    if (time !== this.props.time) {
-      this.props.updateTime(this.state.time, this.props.id, true);
-    }
-  }
-
-  timer = () => {
-    const inx = setInterval(() => {
-      const { time } = this.state;
-      console.log(time);
-      const timerArr = time.split(':');
-      if (+timerArr[2] < 59) {
-        timerArr[2] = +timerArr[2] + 1;
-        timerArr[2] = timerArr[2] < 10 ? `0${timerArr[2]}` : timerArr[2];
-      } else {
-        timerArr[2] = '00';
-        timerArr[1] = +timerArr[1] + 1;
-        timerArr[1] = timerArr[1] < 10 ? `0${timerArr[1]}` : timerArr[1];
-      }
-      if (+timerArr[1] >= 59) {
-        timerArr[1] = '00';
-        timerArr[0] = +timerArr[0] + 1;
-        timerArr[0] = timerArr[0] < 10 ? `0${timerArr[0]}` : timerArr[0];
-      }
-      // eslint-disable-next-line no-confusing-arrow
-      const newTime = timerArr.join(':');
-      this.setState({ time: newTime });
+function Task({ name, id, date, time: propTime, done }){
+  const { toggleDone, removeTask, updateTime } = useContext(Context);
+  const [ isTimerRunning, setIsTimerRunning ] = useState(false);
+  const [ time, setTime ] = useState(propTime);
+  const timeRef  = useRef(time);
+  
+  useEffect(() => {
+    if(!isTimerRunning) return;
+    
+    const idxTimer = setInterval(() => {
+      setTime(time => timer(time));
     }, 1000);
-    this.setState({ indexTimer: inx });
-  };
+    
+    return () => {
+      clearInterval(idxTimer);
+    };
+  },[isTimerRunning]);
 
-  toggleTimer = (e) => {
+  useEffect(() => {
+    timeRef.current = time;
+  },[time]);
+
+  useEffect(() => {
+    return () => {
+      if(time!==timeRef.current) updateTime(timeRef.current, id);
+    };
+  },[]);
+
+  const timer = (() => {
+    const updateTime = (arr, i, infinity) => {
+      if(arr[i]<59||infinity) return arr[i] < 9 ? `0${Number(arr[i])+1}` : Number(arr[i])+1;
+      return '00';
+    }; 
+    
+    return (oldTime) =>{
+      const arr = oldTime.split(':');
+      arr[2] = updateTime(arr, 2); //! seconds
+      arr[1] = Number(updateTime[2])===0? updateTime(arr, 1) : arr[1]; //! minutes
+      arr[0] = Number(updateTime[1])===0&&+Number(arr[2])===0? updateTime(arr,0, true) : arr[0]; //! hours
+      return arr.join(':');
+    };
+  })();
+
+  const handleClickToggleTimer = e => {
     e.stopPropagation();
-    this.setState((state) => {
-      if (state.indexTimer) clearInterval(state.indexTimer);
-      if (!state.timer) this.timer();
-      return { timer: !state.timer };
-    });
+    setIsTimerRunning(t => !t);
   };
 
-  onClickCompleted = (e) => {
-    const { onToggleCompleted } = this.props;
-    onToggleCompleted(e.target.closest('li').id);
-  };
-
-  onClickRemoveTask = (e) => {
+  const handleClickRemoveTask = e => {
     e.stopPropagation();
-    const { removeTask } = this.props;
-    removeTask(e.target.closest('li').id);
+    removeTask(Number(e.target.closest('li').id));
   };
 
-  render() {
-    const { label, id } = this.props;
-    return (
-      /* eslint-disable */
-      <li
-        id={id}
-        onClick={this.onClickCompleted}
-        className={this.props.done ? 'completed' : ''}
-      >
-        <div className="view">
-            <span className="description">{label}</span>
-            <span onClick={this.toggleTimer} className="timer">
-              <button>{this.state.timer ? 
-                <img className="timer-icon" src={pause} alt="pause"/> : 
-                <img className="timer-icon" src={start} alt="start"/>}
-              </button>
-            <div className="timer-time">{this.state.time}</div>
-            </span>
-            <span className="created">{formatDistanceToNow(this.state.date)}</span>
-          <button className="icon icon-edit" />
-          <button onClick={this.onClickRemoveTask} className="icon icon-destroy" />
-        </div>
-      </li>
-    );
-  }
+  const handleClickToggleDone = e => {
+    toggleDone(Number(e.target.closest('li').id));
+  };
+
+  return (
+    <li id={id}
+      className={done ? 'completed' : ''}  
+      onClick={handleClickToggleDone}>
+      <div className="view">
+        <span className="description">{name}</span>
+        <span className="timer">
+          <button onClick={handleClickToggleTimer}>
+            <img className="timer-icon"
+              src={isTimerRunning? pause:start} 
+              alt={isTimerRunning? 'pause':'start'}/>
+          </button>
+          <div className="timer-time">{time}</div>
+        </span>
+        <span className="age">{formatDistanceToNow(date)}</span>
+        <button className="icon icon-edit" />
+        <button className="icon icon-destroy" onClick={handleClickRemoveTask} />
+      </div>
+    </li>
+  );
 }
 
 Task.propTypes = {
-  removeTask: PropTypes.func,
-  onToggleCompleted: PropTypes.func,
-  done: PropTypes.bool,
   id: PropTypes.number,
-  label: PropTypes.string,
+  name: PropTypes.string,
+  done: PropTypes.bool,
+  time: PropTypes.string,
 };
 
 Task.defaultProps = {
   done: false,
+  time: '00:00:00',
 };
+
+export default Task;

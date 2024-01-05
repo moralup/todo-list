@@ -1,5 +1,6 @@
 .todo-list li.completed .description {
 	color: #cdcdcd;
+	fill: #cdcdcd;
 	text-decoration: line-through;
 }
 
@@ -12,6 +13,8 @@
 	width: 423px;
 }
 .timer{
+	color: inherit;
+	fill: inherit;
 	display: flex;
 	margin-bottom: auto;
 	margin-left: auto;

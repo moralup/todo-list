@@ -1,41 +1,29 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import { useContext } from 'react';
+import { Context } from '../context';
 import './task-filter.css';
 
-function TaskFilter(props) {
-  const {
-    active, completed, onFilterAll, onFilterActive, onFilterCompleted,
-  } = props;
-
+function TaskFilter() {
+  const { filter, setFilter } = useContext(Context);
+  
+  const handleClick = e => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    setFilter(btn.id);
+  };
+  
   return (
-    <ul className="filters">
-      <li>
-        <button type="submit" onClick={onFilterAll} className={(!completed && !active) ? 'selected' : ''}>All</button>
-      </li>
-      <li>
-        <button type="submit" onClick={onFilterActive} className={active ? 'selected' : ''}>Active</button>
-      </li>
-      <li>
-        <button type="submit" onClick={onFilterCompleted} className={completed ? 'selected' : ''}>Completed</button>
-      </li>
-    </ul>
+    <ul className="filters" onClick={handleClick}>{
+      ['all', 'active', 'completed'].map(el => {
+        return (
+          <li key={el}>
+            <button id={el}
+              className={filter===el? 'selected':''}>{el}
+            </button>
+          </li>
+        );
+      })
+    }</ul>
   );
 }
-
-TaskFilter.propTypes = {
-  active: PropTypes.bool,
-  completed: PropTypes.bool,
-  onFilterActive: PropTypes.func,
-  onFilterAll: PropTypes.func,
-  onFilterCompleted: PropTypes.func,
-};
-
-TaskFilter.defaultProps = {
-  completed: false,
-  active: false,
-  onFilterActive: () => alert('unknown'),
-  onFilterAll: () => alert('unknown'),
-  onFilterCompleted: () => alert('unknown'),
-};
 
 export default TaskFilter;
